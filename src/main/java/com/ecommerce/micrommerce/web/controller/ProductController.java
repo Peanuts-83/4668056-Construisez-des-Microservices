@@ -1,6 +1,7 @@
 package com.ecommerce.micrommerce.web.controller;
 
 import com.ecommerce.micrommerce.web.dao.ProductDao;
+import com.ecommerce.micrommerce.web.exceptions.PrixIncorrectException;
 import com.ecommerce.micrommerce.web.exceptions.ProduitIntrouvableException;
 import com.ecommerce.micrommerce.web.model.Product;
 import io.swagger.annotations.Api;
@@ -12,6 +13,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import javax.validation.Valid;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Api( "API pour les opérations CRUD sur les produits.")
 @RestController
@@ -22,6 +25,24 @@ public class ProductController {
     public ProductController(ProductDao productDao) {
         this.productDao = productDao;
     }
+
+    @GetMapping("/AdminProduits")
+    public Map<String, Integer> calculerMargeProduit() {
+        List<Product> listProduits = productDao.findAll();
+        return listProduits.stream()
+                .collect(Collectors.toMap(
+                        product -> product.toString(),
+                        product -> (int) (product.getPrix() - product.getPrixAchat())
+                ));
+    }
+
+    /** @GetMapping("/Produits/ordered")
+    public List<Product> trierProduitsParOrdreAlphabetique() {
+        List<Product> unorderedList = this.listeProduits();
+        List<Product> orderedList = unorderedList.stream()
+                .sorted()
+                .toList();
+    }*/
 
     @DeleteMapping (value = "/Produits/{id}")
     public void supprimerProduit(@PathVariable int id) {
@@ -55,6 +76,7 @@ public class ProductController {
     @PostMapping(value = "/Produits")
     public ResponseEntity<Product> ajouterProduit(@RequestBody @Valid Product product) {
         Product productAdded = productDao.save(product);
+        if (productAdded.getPrix()-productAdded.getPrixAchat() <= 0) throw new PrixIncorrectException("Le prix d'achat est plus élevé que le prix de vente.");
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
