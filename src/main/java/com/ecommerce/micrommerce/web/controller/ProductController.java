@@ -12,6 +12,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.Valid;
 import java.net.URI;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -36,13 +37,10 @@ public class ProductController {
                 ));
     }
 
-    /** @GetMapping("/Produits/ordered")
+    @GetMapping("/Produits/ordered")
     public List<Product> trierProduitsParOrdreAlphabetique() {
-        List<Product> unorderedList = this.listeProduits();
-        List<Product> orderedList = unorderedList.stream()
-                .sorted()
-                .toList();
-    }*/
+        return productDao.findAllByOrderByNom();
+    }
 
     @DeleteMapping (value = "/Produits/{id}")
     public void supprimerProduit(@PathVariable int id) {
